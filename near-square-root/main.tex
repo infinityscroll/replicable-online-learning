@@ -1,0 +1,399 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,microtype,enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{remark}\newtheorem{remark}[theorem]{Remark}
+\newcommand{\EE}{\mathbb E}
+\newcommand{\PP}{\mathbb P}
+\newcommand{\Reg}{\operatorname{Reg}}
+\newcommand{\clip}{\operatorname{clip}}
+\newcommand{\pos}[1]{\left(#1\right)_+}
+\newcommand{\abs}[1]{\left|#1\right|}
+\DeclareMathOperator{\TV}{TV}
+\title{Near-Square-Root Regret for Adversarially Replicable Experts}
+\author{Jitendra Prajapati}
+\date{October 22, 2026}
+\begin{document}
+\maketitle
+\begin{abstract}
+We study the full-information experts problem with adversarial replicability: two independent cost sequences from any fixed, time-varying product law must induce identical entire action paths when the learner uses the same random tape. We give a causal algorithm with worst-case expected regret $O_{n,\rho}(\sqrt T\log^{7/2}(2T))$ for every fixed number of experts $n$ and replication parameter $\rho$. A two-expert construction combines a relay with a history-dependent switching threshold, dyadic evidence windows, and a rare compensating prediction rule. A tournament reduction uses modal output paths only in its analysis to preserve the product-law guarantee. The dependence on $n$ and $\rho$ is poor. The result concerns expected regret and does not establish a strict $O(\sqrt T)$ bound, efficient finite-precision implementation, or a guarantee for adaptive input laws.
+\end{abstract}
+\section{Introduction and model}
+Ahmadi, Bhandari and Blum~\cite{abb} introduced adversarial replicability
+for online learning. In their experts model, an oblivious adversary fixes
+an arbitrary sequence of distributions over cost vectors. Two independent
+draws from those distributions, processed with the same internal random
+tape, must produce the same \emph{entire} sequence of expert choices with
+high probability. Their Theorem~4.1 gives an experts regret bound
+$\widetilde O(T^{5/6}(\ln n)^{5/6}\rho^{-1/3})$.
+We obtain a square-root dependence on the horizon, up to logarithmic
+factors, when $n$ and $\rho$ are fixed. Our dependence on those two
+parameters is substantially worse. This is a comparison with the stated
+theorem, not a claim that its bound is the best currently available.
+
+The construction has three parts. A two-expert rule changes action only
+when a public dyadic window supports the change. Its threshold grows with
+an input-only measure of profitable interval variation. A second rule,
+used on a small probability branch, compensates for a variation-dependent
+term in the first rule's expected regret. Finally, a binary tournament
+extends the result to finitely many experts. For the tournament's
+replication proof, we replace each child's random path by a modal path
+\emph{in the analysis only}. This avoids assuming that the actual
+adaptive losses seen by the parent are independent across time.
+
+The compensating rule uses Cover's classical backward fair-future
+betting construction~\cite[Section~3, equations (3.6)--(3.8)]{cover},
+extended from binary to $[-1,1]$ inputs by coordinatewise convexity.
+We include the short argument in Section~\ref{sec:donor}; the
+fair-future formula and this immediate extension are not claimed as
+new contributions.
+The new bound retains logarithmic factors. It therefore does not resolve
+the literal alternative in Section~6 of~\cite{abb}: a strict
+$O(\sqrt T)$ upper bound versus an $\omega(\sqrt T)$ lower bound at fixed
+replication probability.
+
+\paragraph{Model and conventions.}
+There are $n$ experts and a known horizon $T$. At time $t$, the learner
+chooses $I_t\in[n]$, observes $c_t\in[0,1]^n$, and incurs $c_t(I_t)$.
+The choice is a measurable function of $c_1,\ldots,c_{t-1}$ and an
+input-independent tape $R$. For each deterministic input $c_{1:T}$,
+define
+\[
+ \Reg_A(c_{1:T})=
+ \EE_R\sum_{t=1}^T c_t(I_t)-\min_{i\in[n]}\sum_{t=1}^T c_t(i).
+\]
+The expectation includes every branch of the original tape. Regret is
+not truncated at zero and need not be nonnegative on an individual
+input. We do not require a seedwise or high-probability regret bound.
+
+For every fixed sequence of distributions $D_1,\ldots,D_T$ on
+$[0,1]^n$, let $C,C'$ be independent draws from
+$P=\bigotimes_{t=1}^T D_t$, independent of $R$.
+The learner is \emph{adversarially $\rho$-replicable} if
+\begin{equation}\label{eq:model-replication}
+ \PP_{R,C,C'}\{ I_t(C,R)=I_t(C',R)\text{ for all }t\in[T]\}
+ \ge 1-\rho.
+\end{equation}
+There is no identical-distribution assumption, and coordinates of a
+single cost vector may be dependent. Independence across times and
+oblivious choice of the laws are essential to the stated model.
+
+All logarithms are natural unless the base is displayed. Put
+$z_+=\max\{z,0\}$ and $\clip(z)=\max\{-1,\min\{z,1\}\}$.
+For two experts write $x_t=c_t(2)-c_t(1)\in[-1,1]$ and let
+$A_t=+1$ select expert~1 and $A_t=-1$ select expert~2. Then
+\begin{equation}\label{eq:reward-regret}
+ S_t=\sum_{i=1}^t x_i,\qquad
+ G_T=\sum_{t=1}^T A_tx_t,\qquad
+ \Reg_A=\frac{|S_T|-\EE_R G_T}{2}.
+\end{equation}
+This identity follows by subtracting the common cost
+$(c_t(1)+c_t(2))/2$ at each time. It imposes no complementary-cost
+restriction on the original input vectors.
+
+\section{Main guarantees and finite parameters}\label{sec:main}
+For $T\ge2$ define
+\begin{equation}\label{eq:universal-parameters}
+ K=2\lceil\log_2(T+1)\rceil+2,\qquad
+ J=1+\lfloor\log_2(T-1)\rfloor,\qquad
+ \gamma=\sqrt{8\ln(2T)}.
+\end{equation}
+For an outer replication parameter $\rho\in(0,1)$ set
+\begin{align}
+ \beta&=\rho/4,& \lambda&=\frac{\beta}{1-\beta},& r&=\rho/2,
+ \label{eq:mixture-parameters}\\
+ \alpha&=\lambda/120,&
+ \epsilon&=\frac{\lambda}{80(K+1)},&
+ \eta&=\sqrt{2T\ln(16T/r)}.\label{eq:relay-parameters}
+\end{align}
+We use the explicit threshold
+\begin{equation}\label{eq:H-choice}
+ H(T,\rho)=\max\left\{
+ \frac1\epsilon,\quad
+ \gamma\sqrt{(K+1)T},\quad
+ \frac{128J\eta}{\alpha\epsilon^2 r}
+ \right\},
+\end{equation}
+where all quantities on the right have the dependence in
+\eqref{eq:universal-parameters}--\eqref{eq:relay-parameters}. Define
+\begin{equation}\label{eq:B-choice}
+ B(T,\rho)=10H(T,\rho)+\frac{\rho}{8}(\sqrt T+1).
+\end{equation}
+For each fixed $\rho$, this is $O_\rho(\sqrt T\log^{7/2}(2T))$:
+$J,K=O(\log(2T))$, $\epsilon^{-1}=O_\rho(K+1)$, and
+$\eta=O_\rho(\sqrt{T\log(2T)})$.
+
+\begin{theorem}[Two experts]\label{thm:two-expert}
+For $T\ge2$ and $\rho\in(0,1)$, the algorithm specified in
+Sections~\ref{sec:relay} and~\ref{sec:donor} has
+$\Reg_A(c_{1:T})\le B(T,\rho)$ on every deterministic
+$[0,1]^2$ cost sequence and satisfies~\eqref{eq:model-replication}.
+For $T=1$, a shared uniform expert has exact replication and expected
+regret at most $1/2$.
+\end{theorem}
+
+\begin{theorem}[Fixed finite number of experts]\label{thm:main}
+For $n\ge2$, let $N=2^{\lceil\log_2 n\rceil}$. There is a causal
+full-information adversarially $\rho$-replicable learner with
+\begin{equation}\label{eq:n-bound}
+ \sup_{c_{1:T}\in([0,1]^n)^T}\Reg_A(c_{1:T})
+ \le (\log_2 N) B(T,\rho/N^2),\qquad T\ge2.
+\end{equation}
+Consequently its regret is
+$O_{n,\rho}(\sqrt T\log^{7/2}(2T))$ for every fixed $n$ and $\rho$.
+For $n=1$ the sole expert suffices. For $T=1$, a shared
+input-independent expert choice has exact replication and regret at most
+one.
+\end{theorem}
+The proof of Theorem~\ref{thm:two-expert} concludes in
+Section~\ref{sec:donor}. The tournament in
+Section~\ref{sec:tournament} proves Theorem~\ref{thm:main}.
+
+\section{An interval-variation functional}\label{sec:functional}
+Set $S_0=V_0=0$ and define
+\begin{equation}\label{eq:V-definition}
+ V_t=\max_{\mathcal I}
+ \sum_{I\in\mathcal I}
+ \left(\left|\sum_{i\in I}x_i\right|-\gamma\sqrt{|I|}\right)_+,
+ \qquad Q=(V_T-|S_T|)_+.
+\end{equation}
+Here $\mathcal I$ ranges over collections of pairwise disjoint nonempty
+integer intervals in $[1,t]$, including the empty collection. The
+maximum is finite. In particular $0\le V_t\le t$.
+
+\begin{lemma}\label{lem:V-properties}
+The functional $V_t$ is nondecreasing in $t$, coordinatewise convex,
+and $1$-Lipschitz in each input coordinate. For $0\le s<t\le T$,
+\begin{align}
+ V_t&\ge V_s+(|S_t-S_s|-\gamma\sqrt{t-s})_+,
+ \label{eq:V-append}\\
+ V_t&\le |S_t|+Q+\gamma\sqrt T.\label{eq:V-prefix}
+\end{align}
+\end{lemma}
+\begin{proof}
+Append the interval $(s,t]$ to an optimal collection in $[1,s]$ to
+obtain~\eqref{eq:V-append}. Retaining a collection proves monotonicity.
+For each fixed collection, a coordinate appears in at most one
+summand, whose positive-part absolute-value expression is convex and
+$1$-Lipschitz in that coordinate. Maximizing preserves both properties.
+Applying~\eqref{eq:V-append} to the suffix $(t,T]$ yields
+\[
+ V_t\le V_T-|S_T-S_t|+\gamma\sqrt T
+ \le |S_T|+Q-|S_T-S_t|+\gamma\sqrt T
+ \le |S_t|+Q+\gamma\sqrt T.
+\]
+The case $t=T$ follows directly from $V_T\le|S_T|+Q$.
+We will not assume that $Q$ is convex.
+\end{proof}
+
+\section{The supported relay}\label{sec:relay}
+For the moment take positive parameters $H,\alpha,\epsilon$.
+Draw independent $\theta\sim\operatorname{Unif}[-1,1]$ and
+$U\sim\operatorname{Unif}[1,2]$, independent of the input. Put
+$d=U\epsilon$ and $h_t=H+\alpha V_t$. Start with $A_1=+1$ if
+$\theta\le0$ and $A_1=-1$ otherwise.
+
+After observing $x_t$, a \emph{public window} is $(t-L,t]$, where
+$L$ is a power of two dividing $t$. Define flags
+\begin{align*}
+ P_t^+&=\mathbf 1\{S_t-S_{t-L}\ge dh_t
+             \text{ for some public window}\},\\
+ P_t^-&=\mathbf 1\{S_t-S_{t-L}\le-dh_t
+             \text{ for some public window}\}.
+\end{align*}
+For $t<T$, update by the following fixed rule:
+\begin{enumerate}[nosep]
+\item If $A_t=-1$, $P_t^+=1$, and $S_t>h_t(\theta+d)$, set
+      $A_{t+1}=+1$.
+\item If $A_t=+1$, $P_t^-=1$, and $S_t<h_t(\theta-d)$, set
+      $A_{t+1}=-1$.
+\item Otherwise keep $A_{t+1}=A_t$.
+\end{enumerate}
+Windows are never restarted or truncated at a switch. Ties use exactly
+the comparisons displayed above. For the regret proof only, apply the
+same update virtually after time $T$; it changes no played action.
+
+Conditional on $U$ and a deterministic input, there is a scalar endpoint
+$a_t\in[-1,1]$ such that the action after observation $t$ is $+1$
+precisely for $\theta<a_t$, apart from null ties. Initially $a_0=0$.
+If $P_t^+=1$, replace $a$ by
+$\max\{a,\clip(S_t/h_t-d)\}$; if $P_t^-=1$, replace it by
+$\min\{a,\clip(S_t/h_t+d)\}$. These updates commute when both flags
+hold, since their thresholds are ordered. Therefore
+\begin{equation}\label{eq:scalar-reward}
+ \EE_\theta[G_T\mid U]=\sum_{t=1}^T a_{t-1}x_t.
+\end{equation}
+This identity uses the original uniform center, without conditioning on
+agreement of two input streams.
+
+\input{reward}
+\input{replication}
+
+\section{The compensating prediction rule and the mixture}\label{sec:donor}
+Define on $[-1,1]^T$
+\begin{equation}\label{eq:F-definition}
+ F(x)=\max\{|S_T(x)|,V_T(x)\}=|S_T(x)|+Q(x).
+\end{equation}
+By Lemma~\ref{lem:V-properties}, $F$ is coordinatewise convex and
+$1$-Lipschitz in each coordinate.
+
+\begin{lemma}[Fair-input value]\label{lem:fair-value}
+For independent uniform signs $\xi_1,\ldots,\xi_T$,
+$\EE F(\xi)\le\sqrt T+1$.
+\end{lemma}
+\begin{proof}
+Hoeffding's inequality gives, for each nonempty interval $I$,
+\[
+ \PP\left\{\left|\sum_{i\in I}\xi_i\right|>
+                      \gamma\sqrt{|I|}\right\}
+ \le2e^{-\gamma^2/2}.
+\]
+If $V_T>0$ at least one interval has this property. There are at most
+$T^2$ intervals, so
+$\PP\{V_T>0\}\le2T^2e^{-\gamma^2/2}=1/(8T^2)$.
+Since $V_T\le T$, its expectation is at most $1/(8T)\le1$.
+Finally $\EE|S_T|\le\sqrt{\EE S_T^2}=\sqrt T$ and
+$F\le|S_T|+V_T$.
+\end{proof}
+
+\begin{lemma}[Fair-future secant prediction]\label{lem:donor}
+There is a causal randomized binary-action rule with
+\begin{equation}\label{eq:donor-reward}
+ \EE_R G_T\ge |S_T|+Q-\sqrt T-1
+\end{equation}
+on every deterministic input in $[-1,1]^T$.
+\end{lemma}
+\begin{proof}
+For a fixed prefix $x_{1:t}$ let
+\[
+ \Phi_t(x_{1:t})=
+ \EE_{\xi_{t+1:T}}F(x_{1:t},\xi_{t+1:T}),
+ \qquad \Phi_0=\EE F(\xi).
+\]
+At round $t$, define the fractional prediction
+\[
+ p_t=\frac{\Phi_t(x_{1:t-1},+1)-
+                \Phi_t(x_{1:t-1},-1)}{2}\in[-1,1].
+\]
+The range follows from the coordinatewise Lipschitz property.
+Coordinatewise convexity gives, for the actual $x_t\in[-1,1]$,
+\[
+ \Phi_t(x_{1:t})\le
+ \frac{1+x_t}{2}\Phi_t(x_{1:t-1},+1)+
+ \frac{1-x_t}{2}\Phi_t(x_{1:t-1},-1)
+ =\Phi_{t-1}(x_{1:t-1})+p_tx_t.
+\]
+Telescoping yields
+$\sum_t p_tx_t\ge F(x)-\Phi_0$.
+
+The exact conditional expectation need not be computed. At round $t$,
+sample a fresh independent Rademacher future $Z^{(t)}_{t+1:T}$, and form
+\[
+ \widehat p_t=
+ \frac{F(x_{1:t-1},+1,Z^{(t)}_{t+1:T})-
+       F(x_{1:t-1},-1,Z^{(t)}_{t+1:T})}{2}\in[-1,1].
+\]
+Use a fresh independent uniform variable to choose $A_t=+1$ with
+probability $(1+\widehat p_t)/2$. All these variables can be indexed
+by round on the original tape before inputs arrive. On each fixed
+deterministic input, $\EE_R A_t=p_t$. Thus
+$\EE_R G_T\ge F(x)-\EE F(\xi)$, and
+Lemma~\ref{lem:fair-value} proves~\eqref{eq:donor-reward}.
+The sampled future is artificial randomness; no actual future cost
+is accessed. We assert no replication guarantee for this rule alone.
+\end{proof}
+
+\paragraph{The complete two-expert algorithm.}
+With the parameters of Section~\ref{sec:main}, draw one Bernoulli
+branch coin, independently of every other tape coordinate. With
+probability $\beta$, use the prediction rule of Lemma~\ref{lem:donor}
+for the entire horizon. Otherwise use the supported relay. Two replicas
+share this branch coin and all other tape coordinates.
+
+\begin{proof}[Proof of Theorem~\ref{thm:two-expert}]
+The parameter choice has $\lambda\in(0,1)$.
+Lemma~\ref{lem:good-reward} and the first two terms
+of~\eqref{eq:H-choice} give relay reward at least
+$|S_T|-\lambda Q-20H$ in original-tape expectation.
+By Lemma~\ref{lem:donor}, the full mixture therefore has
+\begin{align*}
+ \EE_R G_T
+ &\ge(1-\beta)(|S_T|-\lambda Q-20H)
+           +\beta(|S_T|+Q-\sqrt T-1)\\
+ &=|S_T|-20(1-\beta)H-\beta(\sqrt T+1),
+\end{align*}
+because $(1-\beta)\lambda=\beta$.
+Equation~\eqref{eq:reward-regret} gives
+$\Reg_A\le10H+(\beta/2)(\sqrt T+1)=B(T,\rho)$.
+No branch or negative-regret contribution has been discarded.
+
+For every fixed product law, Lemma~\ref{lem:relay-replication}
+and the third term in~\eqref{eq:H-choice} bound the relay's entire-path
+failure by $r$. Charge the compensating branch its full probability
+$\beta$, whether or not its two paths happen to agree. Independence of
+the branch coin from all inner randomness yields failure at most
+\[
+ \beta+(1-\beta)r=\rho/4+(1-\rho/4)\rho/2<\rho.
+\]
+The arbitrary cost-vector reduction was established
+in~\eqref{eq:reward-regret}. For $T=1$, a shared uniform expert is
+independent of both costs, replicates exactly, and has expected regret
+at most $1/2$.
+\end{proof}
+
+\input{tournament}
+
+\section{Computation and scope}\label{sec:scope}
+The interval functional admits the dynamic program
+\begin{equation}\label{eq:DP}
+ V_t=\max\left\{V_{t-1},\max_{0\le s<t}
+ \left[V_s+(|S_t-S_s|-\gamma\sqrt{t-s})_+\right]\right\}.
+\end{equation}
+To verify this identity, take the last interval of an optimal collection.
+If it ends before $t$, its value is at most $V_{t-1}$; otherwise its
+predecessors lie in the prefix ending at its left endpoint. Conversely
+every candidate in~\eqref{eq:DP} is feasible.
+Prefix sums and this dynamic program require $O(T^2)$ arithmetic
+operations. The relay's public window tests require at most
+$O(T\log(2T))$ additional operations. Evaluating $F$ twice for each
+fresh artificial future gives a naive $O(T^3)$ arithmetic implementation
+of the compensating rule. A tournament with $O(n)$ internal nodes has
+the corresponding $O(nT^3)$ arithmetic bound.
+
+These are exact real-arithmetic descriptions. No finite-precision
+comparison rule, bit-complexity bound, implementation measurement or
+practical speedup follows. The explicit constants and dependence on
+$n,\rho$ can make the numerical bound uninformative at moderate
+horizons. The asymptotic improvement concerns $T$ with those parameters
+fixed. The algorithm knows $T$ and $\rho$; an anytime guarantee is not
+claimed.
+
+The rare branch is allowed because regret is an unconditional
+expectation over the entire input-independent tape, whereas replication
+permits a probability $\rho$ of failure. The proof does not provide a
+high-probability or seedwise regret theorem. It also does not extend
+the product-law replication guarantee to input laws that adapt to
+realized past costs or actions. The logarithmic factors leave the
+strict square-root alternative in~\cite{abb} unresolved by this work.
+
+\begin{thebibliography}{9}
+\bibitem{abb}
+Saba Ahmadi, Siddharth Bhandari and Avrim Blum.
+\newblock Replicable Online Learning.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2025.
+\newblock \href{https://proceedings.neurips.cc/paper_files/paper/2025/hash/da8abfd153886b745278b40b5df0be93-Abstract-Conference.html}{Proceedings};
+\href{https://home.ttic.edu/~avrim/Papers/24226_Replicable_Online_Learni.pdf}{author-hosted paper}.
+\bibitem{cover}
+Thomas M. Cover.
+\newblock Behaviour of Sequential Predictors of Binary Sequences.
+\newblock In \emph{Transactions of the Fourth Prague Conference on
+Information Theory, Statistical Decision Functions, Random Processes},
+pages 263--272. Publishing House of the Czechoslovak Academy of Sciences,
+Prague, 1967. Conference held in 1965.
+\newblock \href{https://isl.stanford.edu/~cover/papers/paper3.pdf}{Primary scan}.
+\end{thebibliography}
+\end{document}

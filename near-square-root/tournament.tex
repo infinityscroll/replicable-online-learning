@@ -1,0 +1,169 @@
+\section{Extension to any fixed number of experts}
+\label{sec:tournament}
+
+The two-expert learner can be composed in a tournament. Its actual child
+loss sequences are adaptive functions of the original observations and
+need not be product-distributed. We instead introduce deterministic
+modal paths for the analysis of replication, conditional only on tapes.
+
+\begin{lemma}[A modal whole-path comparison]
+\label{lem:modal-path}
+Let $Z=f(X,R)$ take values in a finite alphabet, where the input $X$ has
+a fixed law and the original tape $R$ is independent of $X$. For each
+tape value $s$, define $p_s(z)=\PP_X\{f(X,s)=z\}$ and select a maximizer
+$z^*(s)$ with a fixed lexicographic rule for ties. If $X,X'$ are
+independent copies sharing $R$, then
+\begin{equation}
+ \PP_{R,X}\{f(X,R)\ne z^*(R)\}
+ \le\PP_{R,X,X'}\{f(X,R)\ne f(X',R)\}.
+ \label{eq:modal-path-bound}
+\end{equation}
+\end{lemma}
+\begin{proof}
+The probabilities $p_s(z)$ are measurable functions of $s$, by integration
+of the measurable indicators defining $f$. There are finitely many
+$z$, so lexicographic maximization gives a measurable selection.
+For each fixed $s$, independence of $X,X'$ gives conditional
+disagreement $1-\sum_z p_s(z)^2$. Since
+\[
+ \sum_z p_s(z)^2\le\max_z p_s(z),
+\]
+the single-input modal deviation $1-\max_zp_s(z)$ is no larger.
+Integrating over the original tape proves
+\eqref{eq:modal-path-bound}.
+\end{proof}
+
+The modal path may depend on the unknown input law. It is used only in
+the analysis and is neither computed nor supplied to the learner.
+In particular, \eqref{eq:modal-path-bound} is an averaged-tape
+inequality, not a bound on deviation for every fixed tape.
+
+\begin{theorem}[Tournament reduction]
+\label{thm:tournament}
+Suppose a two-expert learner, for every $r\in(0,1)$, has expected regret
+at most $B(T,r)$ on every deterministic sequence of costs in $[0,1]^2$
+and is $r$-replicable for every fixed time-varying product law on those
+cost pairs. The expectation and replication probability use its entire
+original input-independent tape.
+
+For $n\ge2$, $\rho\in(0,1)$, and $T\ge2$, let
+\[
+ N=2^{\lceil\log_2 n\rceil},\qquad
+ D_{\rm tr}=\log_2N,\qquad r=\frac{\rho}{N^2}.
+\]
+There is an $n$-expert learner with expected regret at most
+$D_{\rm tr}B(T,r)$ on every deterministic cost sequence, whose entire
+original-expert action path has disagreement probability at most
+\begin{equation}
+ \frac{r(N^2-1)}{3}<\rho
+ \label{eq:tournament-replication-bound}
+\end{equation}
+under any fixed nonstationary product law on $[0,1]^{n\times T}$.
+Coordinates within a round may be dependent.
+\end{theorem}
+
+\begin{proof}
+Pad the original experts with duplicates to form $N$ leaves of a complete
+balanced binary tree. Each leaf recommends its fixed original expert
+index. Each internal node runs a copy of the two-expert learner with
+parameter $r$ on its own independent subtape. At a round, a node selects
+one of its two children and recommends the original index currently
+recommended by that child. The root recommendation is played.
+
+After the full original cost vector is revealed, every internal node
+receives the costs of both current child recommendations and updates.
+All nodes operate in full information at every round, including nodes
+not selected by their ancestors. Consequently a child's recommendation
+path depends only on past original costs and tapes in that child's
+subtree; it depends on neither its parent's tape nor any ancestor's
+choices. This also specifies a causal implementation: all current
+recommendations are determined before the current cost vector is
+revealed.
+
+\paragraph{Regret.}
+Fix a deterministic original cost sequence. Conditional on all tapes
+strictly below an internal node, its two child recommendation paths and
+their two cost sequences are deterministic and independent of its own
+tape. The node's expected total cost is therefore at most the smaller
+child total plus $B(T,r)$, and hence at most the total of either
+particular child plus $B(T,r)$. Integrating the descendant tapes gives
+\[
+ \EE L_{\rm node}\le\EE L_{\rm child}+B(T,r)
+\]
+for either specified child. Iterating along the path to any fixed leaf
+yields
+\[
+ \EE L_{\rm root}\le L_{\rm leaf}+D_{\rm tr}B(T,r).
+\]
+Choosing a leaf representing a best original expert proves the regret
+bound. This argument keeps all tape averaging intact and makes no
+assumption that any child regret is nonnegative.
+
+\paragraph{Replication.}
+Fix an arbitrary product law on the original cost vectors. For a parent,
+let $q_L,q_R$ be bounds on the disagreement probabilities of its child
+original-index paths under that law, using independent input streams
+and the same subtree tapes. Condition only on all tapes strictly below
+the parent. For each child, choose its canonical modal whole
+original-index path under the fixed law and those fixed tapes, as in
+Lemma~\ref{lem:modal-path}. These two paths are now deterministic
+sequences of indices. Their conditional definition may use the entire
+fixed law; it is an analysis device, not part of the causal algorithm.
+
+Construct a shadow parent in each stream by evaluating the current
+original cost vector at these two deterministic shadow indices and
+running the parent learner on the resulting cost pairs with its original
+parent tape. For every fixed choice of descendant tapes, the shadow
+cost pairs are independent across time, since the original vectors are.
+The two shadow streams are independent copies of the same product law.
+The parent's own tape remains independent of these inputs and of the
+fixed descendant tapes. Its two-expert guarantee therefore bounds the
+shadow parent decision-path disagreement by $r$. Integrating over the
+descendant tapes preserves this bound.
+
+Lemma~\ref{lem:modal-path}, followed by a union bound over both streams
+and both children, bounds the unconditional probability that any actual
+child path differs from its shadow by
+\[
+ 2(q_L+q_R).
+\]
+Only the averaged-tape shadow inequality is used here. We do not
+condition on the complement of this deviation event, and we do not
+assert that the actual adaptive child costs form a product law.
+
+On the event of no child-shadow deviation, the actual and shadow parent
+cost sequences coincide within each stream. Causality and use of the
+same parent tape then imply that their parent decision paths coincide
+within that stream. If the two shadow parent decision paths also agree,
+the selected deterministic shadow child indices agree at every time,
+so the actual parent original-index paths agree. This pointwise event
+containment proves
+\begin{equation}
+ q_{\rm parent}\le r+2(q_L+q_R).
+ \label{eq:tournament-recursion}
+\end{equation}
+No independence between left and right child paths is required.
+
+Leaves have zero disagreement. In a complete balanced tree,
+\eqref{eq:tournament-recursion} gives, at height $j$, the bound
+$q_j\le r+4q_{j-1}$, with $q_0=0$. Hence
+\[
+ q_{\rm root}\le r\sum_{j=0}^{D_{\rm tr}-1}4^j
+   =\frac{r(N^2-1)}{3}<\rho,
+\]
+as claimed. All probabilities include the entire original collection
+of node tapes, including any rare branch coins used by the base
+learners.
+\end{proof}
+
+Applying Theorem~\ref{thm:tournament} to the two-expert bound already
+proved gives
+\[
+ \Reg_T=O_{n,\rho}\!\left(\sqrt T\log^{7/2}(2T)\right)
+\]
+for every fixed finite $n$ and fixed $\rho\in(0,1)$. The dependence on
+$n$ and $\rho$ is poor; the reduction makes no claim of an optimal
+dependence on either parameter. For $n=1$, always select the sole expert.
+For $T=1$, any shared input-independent expert choice replicates exactly
+and has regret at most one. These conventions cover the finite boundary
+cases without the tournament parameters.

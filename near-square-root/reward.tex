@@ -1,0 +1,448 @@
+\section{Reward of the supported relay}\label{sec:reward}
+
+This section considers a fixed deterministic input
+$x_1,\ldots,x_T\in[-1,1]$, with $T\ge2$. All expectations in the
+reward argument are over the learner's original random tape. In particular,
+none of the inequalities below is a regret guarantee for each individual
+random tape.
+
+Recall that $S_t=\sum_{i=1}^t x_i$, $S_0=0$,
+$\gamma=\sqrt{8\log(2T)}$, and
+\[
+ V_t=\max_{\mathcal I}\sum_{I\in\mathcal I}
+       \pos{\abs{\sum_{i\in I}x_i}-\gamma\sqrt{\abs{I}}},
+ \qquad V_0=0,\qquad Q=\pos{V_T-\abs{S_T}},
+\]
+where $\mathcal I$ ranges over collections of pairwise disjoint, nonempty
+integer intervals contained in $[1,t]$, including the empty collection.
+Let $h_t=H+\alpha V_t$. The width $h_t$ is a nondecreasing function of the
+input alone. We condition throughout most of the proof on a fixed value
+$U\in[1,2]$, and write $d=U\epsilon$. The remaining random center
+$\theta$ is uniform on $[-1,1]$.
+
+For clarity, the public support predicates after observation $t$ are
+\[
+ \mathcal P_t:\quad
+ \exists L\text{ a power of two with }L\mid t,
+ \quad S_t-S_{t-L}\ge d h_t,
+\]
+and the analogous predicate $\mathcal N_t$ with
+$S_t-S_{t-L}\le-dh_t$. These predicates do not depend on $\theta$.
+All such windows are allowed, including windows that precede a previous
+action change. The relay starts with $A_1=+1$ if and only if $\theta\le0$.
+After observation $t$, a current action $-1$ changes to $+1$ when
+$\mathcal P_t$ holds and $S_t>h_t(\theta+d)$; a current action $+1$ changes
+to $-1$ when $\mathcal N_t$ holds and $S_t<h_t(\theta-d)$.
+Otherwise the action is retained. We also define the update after $t=T$
+for the algebra below; the resulting $A_{T+1}$ is never played.
+
+Set
+\[
+ K=2\lceil\log_2(T+1)\rceil+2.
+\]
+Any integer increment interval $(s,t]$ can be partitioned into at most
+$K$ aligned dyadic intervals. Indeed, its maximal contained aligned dyadic
+intervals partition it, and at most two of each length occur. Every piece
+of such a partition is one of the public windows at its right endpoint.
+
+\subsection{The scalar state and two elementary path inequalities}
+
+\begin{lemma}[Nested centers]\label{lem:reward-nested}
+For fixed $U$ and fixed input, there are scalar states
+$a_0,\ldots,a_T\in[-1,1]$, with $a_0=0$, such that the centers whose
+action after observation $t$ is $+1$ form $[-1,a_t]$, up to boundary
+points of zero measure. Consequently, if
+\[
+ g_u=\EE_\theta\!\left[\sum_{t=1}^u A_t x_t\,\middle|\,U\right],
+ \qquad \Delta a_t=a_t-a_{t-1},
+\]
+then
+\begin{equation}\label{eq:reward-sbp}
+ g_u=\sum_{t=1}^u a_{t-1}x_t
+     =a_u S_u-\sum_{t=1}^u S_t\Delta a_t.
+\end{equation}
+At every actual up update, meaning $\Delta a_t>0$,
+\begin{equation}\label{eq:reward-endpoints}
+ S_t\ge h_t(a_t+d),
+\end{equation}
+with equality unless $a_t=1$. At an actual down update,
+$S_t\le h_t(a_t-d)$, with equality unless $a_t=-1$.
+\end{lemma}
+
+\begin{proof}
+Write $\clip(z)=\max\{-1,\min\{1,z\}\}$, and let
+$l_t=\clip(S_t/h_t-d)$ and $u_t=\clip(S_t/h_t+d)$.
+If only positive support holds, the new scalar is
+$\max\{a_{t-1},l_t\}$; if only negative support holds, it is
+$\min\{a_{t-1},u_t\}$. When both supports hold, the new scalar is the
+projection of $a_{t-1}$ onto $[l_t,u_t]$. The latter interval is nonempty,
+and the two one-sided operations commute. If neither support holds, the
+scalar is unchanged. This proves the interval representation by induction,
+starting from $a_0=0$. Its signed action mean is exactly $a_t$.
+There are only finitely many center boundary values for this fixed input,
+so their treatment has no effect on the expectation. Summation by parts
+gives \eqref{eq:reward-sbp}. At an actual up update,
+$a_t=\clip(S_t/h_t-d)>a_{t-1}$, which proves
+\eqref{eq:reward-endpoints} and its equality statement. The down case is
+symmetric.
+\end{proof}
+
+\begin{lemma}[Prefix localization]\label{lem:reward-prefix}
+For every $0\le u\le T$,
+\begin{equation}\label{eq:reward-prefix}
+ V_u\le\abs{S_u}+Q+\gamma\sqrt T.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+For $u<T$, append the suffix interval $(u,T]$ to a maximizing collection
+for $V_u$. This gives
+\[
+ V_T\ge V_u+\pos{\abs{S_T-S_u}-\gamma\sqrt{T-u}}
+       \ge V_u+\abs{S_T-S_u}-\gamma\sqrt T.
+\]
+Since $V_T\le\abs{S_T}+Q$ and
+$\abs{S_T}-\abs{S_T-S_u}\le\abs{S_u}$, the claim follows.
+For $u=T$ it is immediate from the definition of $Q$.
+\end{proof}
+
+For the generic estimates that follow, assume
+\begin{equation}\label{eq:reward-conditions}
+ 0<\alpha\le\frac18,\qquad H\ge\frac1\epsilon,
+ \qquad (K+1)d\le1.
+\end{equation}
+Because $d=U\epsilon\ge\epsilon$ and $K\ge4$, these assumptions imply
+\[
+ d\le\frac15,\qquad M:=1+d\le\frac32,
+ \qquad D:=Kd+\frac1H\le(K+1)d\le1.
+\]
+We use the abbreviation $\ell=d+\tfrac32D$.
+
+\subsection{Delayed crossings and scalar jumps}
+
+\begin{lemma}[Delay and jump bound]\label{lem:reward-delay}
+Suppose $r<t$ is the preceding actual scalar update before time $t$, or
+$r=0$ if there is none, and put $a=a_r$. Thus $a$ is fixed after $r$
+through just before $t$. If $a<1$, then
+\[
+ S_t-(a+d)h_t\le D h_t+M(h_t-h_r).
+\]
+If $a>-1$, then
+\[
+ S_t-(a-d)h_t\ge-D h_t-M(h_t-h_r).
+\]
+These bounds also hold when there is no actual update at time $t$.
+At every actual update, with $r$ denoting its preceding actual update,
+\begin{equation}\tag{A}\label{eq:reward-A}
+ \abs{\Delta a_t}\le D+M\frac{h_t-h_r}{h_t}.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Consider the upper bound, for which $a<1$. Immediately after $r$,
+\[
+ S_r\le(a+d)h_r.
+\]
+This holds initially. After an up update it is equality, because $a<1$
+rules out upper saturation. After a down update it follows from
+$S_r\le(a-d)h_r$. Let $b_s=(a+d)h_s$ and
+$B=\max_{r\le s\le t}b_s$.
+
+If $S_t\le B$, the bound $S_t\le B+Kd h_t+1$ is automatic. Otherwise,
+let $s<t$ be the last integer with $s\ge r$ and $S_s\le B$; such an
+$s$ exists by the preceding endpoint inequality. Every integer $v$ with
+$s<v<t$ has $S_v>B\ge b_v$. Partition $(s,t-1]$, if nonempty, into at
+most $K$ aligned dyadic intervals. At the endpoint $v$ of any such piece,
+its increment must be strictly less than $dh_v$. If not, positive support
+would hold there, and $S_v>(a+d)h_v$ with $a<1$ would strictly increase
+the scalar before $t$, contradicting the choice of $r$. Each piece thus
+contributes less than $dh_t$, and the last increment $x_t$ is at most one.
+It follows that
+\[
+ S_t\le B+Kd h_t+1.
+\]
+Since $\abs{a+d}\le1+d=M$ and $h$ is nondecreasing,
+\[
+ B-(a+d)h_t\le M(h_t-h_r).
+\]
+Also $1\le h_t/H$, so the upper bound follows from the definition of $D$.
+The lower bound is proved in the same way using the minimum of
+$(a-d)h_s$ and negative support. Its starting inequality is valid whenever
+$a>-1$, by the symmetric endpoint argument.
+
+At an actual up update, clipping can only reduce the movement, so
+\[
+ \Delta a_t\le S_t/h_t-d-a.
+\]
+The upper delay bound gives \eqref{eq:reward-A}; a down update uses the
+lower bound. The argument used only the absence of intermediate actual
+updates, not the existence of an update at $t$, which proves the stated
+final-tail version as well. Allowing old support windows causes no
+difficulty: all the internal windows used in the partition remain allowed.
+\end{proof}
+
+\subsection{Weighted variation and saturation losses}
+
+For $u\le T$ define
+\[
+ W_u=\sum_{t=1}^u h_t\abs{\Delta a_t}.
+\]
+For $c>0$, let $\TV^c(S_{[0,u]})$ be the supremum of
+$\sum_j\pos{\abs{S_{v_j}-S_{r_j}}-c}$ over pairwise disjoint increment
+intervals $(r_j,v_j]\subseteq(0,u]$.
+
+\begin{lemma}[Weighted variation]\label{lem:reward-variation}
+For every $u\le T$,
+\begin{equation}\tag{B}\label{eq:reward-B}
+ \begin{split}
+ W_u
+ &\le\TV^{2dH}(S_{[0,u]})+(h_u-H)+dH\\
+ &\le(1+\alpha)V_u+\frac{\gamma^2T}{8dH}+dH.
+ \end{split}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+If there are no actual updates, the claim is immediate. Otherwise,
+partition the nonzero scalar changes through $u$ into maximal runs with
+constant sign. Include intervening zero changes in each run interval.
+Suppose an up run ends at $s$ and the preceding down run ends at $r$.
+Summation by parts, using $\abs{a_t}\le1$, gives
+\[
+ \begin{split}
+ \sum_{t=r+1}^s h_t\Delta a_t
+ &=h_s a_s-h_r a_r
+      -\sum_{t=r+1}^s a_{t-1}(h_t-h_{t-1})\\
+ &\le h_s a_s-h_r a_r+(h_s-h_r).
+ \end{split}
+\]
+The actual endpoint inequalities, including saturated endpoints, imply
+$h_s a_s\le S_s-dh_s$ and $h_r a_r\ge S_r+dh_r$.
+Hence this run's weighted variation is at most
+\[
+ S_s-S_r-d(h_s+h_r)+(h_s-h_r)
+ \le\pos{\abs{S_s-S_r}-2dH}+(h_s-h_r).
+\]
+For a down run the identical bound follows after reversing signs.
+
+The first run starts at $r=0$ with $S_0=a_0=0$, rather than at an
+opposite-direction endpoint. If it is an up run, its bound before
+positive-part truncation is $S_s-dh_s+(h_s-H)$. The elementary inequality
+\[
+ S_s-dh_s\le\pos{\abs{S_s}-2dH}+dH
+\]
+shows that one additional $dH$ suffices. The first down run is symmetric.
+The run intervals are disjoint in their increments, and their total width
+increase is no greater than $h_u-H$. Summing proves the first line of
+\eqref{eq:reward-B}. In particular, saturation has not been replaced by
+an equality at any run endpoint.
+
+For any $c>0$ and any interval of length $L$,
+$\gamma\sqrt L\le c+\gamma^2L/(4c)$. Therefore
+\[
+ \pos{\abs{S_v-S_r}-c}
+ \le\pos{\abs{S_v-S_r}-\gamma\sqrt{v-r}}
+       +\frac{\gamma^2(v-r)}{4c}.
+\]
+The first terms summed over a disjoint interval collection are bounded
+by $V_u$, and the lengths sum to at most $T$. Take $c=2dH$ and use
+$h_u-H=\alpha V_u$ to obtain the second line of \eqref{eq:reward-B}.
+\end{proof}
+
+\begin{lemma}[Energy accounting]\label{lem:reward-energy}
+For every $u\le T$,
+\begin{equation}\tag{C}\label{eq:reward-C}
+ g_u\ge a_u S_u-\frac{h_u}{2}-\ell W_u-3M(h_u-H).
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+At each actual update, define $e_t$ by
+\[
+ S_t\Delta a_t=h_t a_t\Delta a_t
+                  +dh_t\abs{\Delta a_t}+e_t.
+\]
+At an unsaturated new value, $e_t=0$. At an up saturation $a_t=1$,
+\[
+ e_t=\bigl(S_t-h_t(1+d)\bigr)\Delta a_t\ge0.
+\]
+If $r$ is the preceding actual update, the delay bound gives
+\[
+ S_t-h_t(1+d)
+ \le h_t(D-\Delta a_t)+M(h_t-h_r)
+ \le Dh_t+M(h_t-h_r).
+\]
+Using $\abs{\Delta a_t}\le2$, this bounds $e_t$ by
+$Dh_t\abs{\Delta a_t}+2M(h_t-h_r)$. The same bound holds at a down
+saturation. The intervals between consecutive actual updates are disjoint,
+so
+\[
+ \sum_{t\le u}e_t\le DW_u+2M(h_u-H).
+\]
+Similarly, multiply \eqref{eq:reward-A} by
+$h_t\abs{\Delta a_t}/2$ and sum to obtain
+\[
+ \frac12\sum_{t\le u}h_t(\Delta a_t)^2
+ \le\frac D2W_u+M(h_u-H).
+\]
+Here any final interval with no scalar update can only increase the
+right-hand side through $h_u$.
+
+The exact quadratic summation-by-parts identity is
+\[
+ \sum_{t\le u}h_t a_t\Delta a_t
+ =\frac12h_u a_u^2
+  +\frac12\sum_{t\le u}h_t(\Delta a_t)^2
+  -\frac12\sum_{t\le u}a_{t-1}^2(h_t-h_{t-1}).
+\]
+The final term is nonpositive, since $h$ is nondecreasing. Substitute
+this identity and the bounds above into \eqref{eq:reward-sbp}, discard
+the favorable width term in the reward, and use $a_u^2\le1$. The result
+is \eqref{eq:reward-C}, with $\ell=d+3D/2$.
+\end{proof}
+
+\subsection{Terminal localization and finite constants}
+
+\begin{lemma}[A suitable terminal prefix]\label{lem:reward-terminal}
+There exists $u\in\{0,\ldots,T\}$, allowed to depend on $U$ and the
+deterministic input, for which $\abs{S_u}\le4h_u$ and
+\begin{equation}\tag{D}\label{eq:reward-D}
+ g_T\ge\abs{S_T}-9h_u-\ell W_u-3M(h_u-H).
+\end{equation}
+For this $u$,
+\begin{equation}\tag{E}\label{eq:reward-E}
+ V_u\le\frac{Q+\gamma\sqrt T+4H}{1-4\alpha}
+      \le2\bigl(Q+\gamma\sqrt T+4H\bigr).
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+First note that at any actual update $t$,
+$\abs{S_t}\le4h_t$. For an up update, the upper delay bound gives
+\[
+ S_t\le(1+d+D+M)h_t<4h_t,
+\]
+where we used $d\le1/5$, $D\le1$, and $M\le3/2$.
+The other side follows from
+$S_t\ge h_t(a_t+d)\ge-h_t$. A down update is symmetric.
+
+If $a_T\in(-1,1)$, choose $u=T$. If $T$ is an actual update, the
+preceding bound applies. Otherwise, both one-sided delay bounds apply
+to the final interval of constant scalar state, and again yield
+$\abs{S_T}\le(1+d+D+M)h_T<4h_T$.
+If $a_T$ is saturated but $a_T S_T<0$, also choose $u=T$.
+An actual update to a saturated value has $S_T$ of the same sign, so
+in this case there is a final interval with no actual update. When
+$a_T=1$ only the lower delay bound is needed, and when $a_T=-1$ only
+the upper bound is needed. Together with the assumed wrong sign, it
+gives $\abs{S_T}\le4h_T$. In both of these cases,
+\[
+ \abs{S_T}-a_T S_T\le2\abs{S_T}\le8h_T,
+\]
+and \eqref{eq:reward-C} yields \eqref{eq:reward-D}, since
+$8h_T+h_T/2\le9h_T$.
+
+It remains to treat $a_T\in\{-1,1\}$ with $a_T S_T\ge0$.
+Let $u$ be the last actual scalar update. Such an update exists because
+$a_0=0$. The actual-update bound above gives $\abs{S_u}\le4h_u$.
+After $u$, the scalar is constantly $a_T$, so
+\[
+ g_T=g_u+a_T(S_T-S_u).
+\]
+Apply \eqref{eq:reward-C} at $u$ and use
+$a_u=a_T$ and $a_T S_T=\abs{S_T}$; this proves the stronger bound with
+$h_u/2$ in place of $9h_u$, and hence \eqref{eq:reward-D}.
+This case includes $S_T=0$. The virtual update at $T$, if it is the last
+actual update, is harmless: the displayed reward decomposition then has
+an empty final segment.
+
+Finally, apply Lemma~\ref{lem:reward-prefix} at this $u$ and use
+$\abs{S_u}\le4(H+\alpha V_u)$. Rearranging gives the first inequality
+in \eqref{eq:reward-E}. The second uses $\alpha\le1/8$.
+\end{proof}
+
+\begin{proposition}[Generic reward estimate]\label{prop:reward-generic}
+Under \eqref{eq:reward-conditions}, for each fixed $U\in[1,2]$,
+\begin{equation}\tag{F}\label{eq:reward-F}
+ \begin{split}
+ g_T\ge{}&\abs{S_T}-(30\alpha+4\ell)(Q+\gamma\sqrt T)\\
+          &-\bigl[9+\ell d+120\alpha+16\ell\bigr]H
+           -\frac{\ell\gamma^2T}{8dH}.
+ \end{split}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+Substitute \eqref{eq:reward-B} into \eqref{eq:reward-D}, and use
+$h_u=H+\alpha V_u$. With
+\[
+ b=9\alpha+3M\alpha+\ell(1+\alpha),
+\]
+the result is
+\[
+ g_T\ge\abs{S_T}-(9+\ell d)H-bV_u
+                     -\frac{\ell\gamma^2T}{8dH}.
+\]
+Since $M\le3/2$ and $\alpha\le1/8$,
+\[
+ 2b\le27\alpha+\frac94\ell\le30\alpha+4\ell,
+ \qquad
+ 8b\le108\alpha+9\ell\le120\alpha+16\ell.
+\]
+Apply \eqref{eq:reward-E} and these two conservative coefficient bounds
+to obtain \eqref{eq:reward-F}.
+\end{proof}
+
+\begin{lemma}[Good-branch reward]\label{lem:good-reward}
+Let $\lambda\in(0,1]$, and choose
+\[
+ \alpha=\frac{\lambda}{120},\qquad
+ \epsilon=\frac{\lambda}{80(K+1)},\qquad
+ H\ge\max\left\{\frac1\epsilon,
+                       \gamma\sqrt{(K+1)T}\right\}.
+\]
+The specified relay satisfies, for every deterministic input in $[-1,1]^T$,
+\begin{equation}\tag{G}\label{eq:reward-G}
+ \EE_{\theta,U}\!\left[\sum_{t=1}^T A_t x_t\right]
+ \ge\abs{S_T}-\lambda Q-20H.
+\end{equation}
+In fact, the same bound holds conditional on every fixed $U\in[1,2]$.
+\end{lemma}
+
+\begin{proof}
+For every such $U$, the generic assumptions hold. Moreover,
+\[
+ \ell=d+\frac32D
+ \le\frac52(K+1)d
+ \le5(K+1)\epsilon=\frac{\lambda}{16}.
+\]
+Consequently,
+\[
+ 30\alpha+4\ell\le\frac\lambda2,
+ \qquad
+ 9+\ell d+120\alpha+16\ell
+ \le9+\frac{\lambda}{80}+2\lambda<12.
+\]
+The assumed lower bound on $H$ implies $\gamma\sqrt T\le H$ and
+\[
+ \frac{\ell\gamma^2T}{8dH}
+ \le\frac{5(K+1)\gamma^2T}{16H}\le\frac5{16}H.
+\]
+Thus \eqref{eq:reward-F} gives the stronger estimate
+\[
+ g_T\ge\abs{S_T}-\frac\lambda2 Q
+                    -\left(12+\frac12+\frac5{16}\right)H.
+\]
+Use $Q\ge0$ to obtain \eqref{eq:reward-G}. The estimates are uniform
+in $U$, so averaging over its original independent distribution preserves
+the bound.
+\end{proof}
+
+\begin{remark}
+The last-update choice in Lemma~\ref{lem:reward-terminal} is essential:
+it avoids charging a large terminal variation after a long final segment
+on which the scalar action is already saturated with the correct sign.
+All scalar reward identities above average over the original random
+center. They impose neither a seedwise regret guarantee nor nonnegative
+regret on any branch of the eventual learner.
+\end{remark}

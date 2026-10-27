@@ -1,0 +1,604 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,microtype,amsmath,amssymb,amsthm,mathtools,booktabs}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+\usepackage{enumitem}
+\setlist{nosep}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{remark}[theorem]{Remark}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Prob}{\mathbb P}
+\newcommand{\R}{\mathbb R}
+\newcommand{\1}{\mathbf 1}
+\newcommand{\pos}[1]{\left(#1\right)_+}
+\newcommand{\TV}{\operatorname{TV}}
+\newcommand{\KL}{\operatorname{KL}}
+\newcommand{\Reg}{\operatorname{Reg}}
+\newcommand{\iid}{\mathrm{iid}}
+\newcommand{\prodclass}{\mathrm{prod}}
+\newcommand{\calV}{\mathcal V}
+\title{Separating iid and time-varying replication\\in online learning}
+\author{Jitendra Prajapati}
+\date{26 October 2026}
+\begin{document}
+\maketitle
+\begin{abstract}
+We compare two requirements for a full-information experts learner: its
+entire action path must agree on independent input streams drawn either
+from every iid law, or from every time-varying product law, when the runs
+share their complete internal randomness. In both cases regret is
+worst-case expected regret on every deterministic input, against one
+fixed expert. For $n=2^m$ experts and $T=mL$ rounds, we give a finite
+product-replication lower bound of order
+$\min\{T,\sqrt T\,m^{3/2}/\rho\}$ at fixed replication error $\rho<1$.
+A self-contained iid-replicable construction has regret
+$O(\rho^{-2}\sqrt T\log(2n)[1+\log\log(2T)]^2)$.
+At $T=m^3,n=2^m$, product-law replication forces linear regret while
+iid replication permits sublinear regret. At $T=m2^m,n=2^m$, the resulting
+multiplicative gap diverges even though $n<T$.
+The lower bound allows arbitrary shared randomness, hidden state and
+rare exceptional branches. These are growing-expert results; they do
+not establish an impossibility of no-regret learning for fixed $n$,
+an optimal general regret rate, or a practical failure of trained models.
+\end{abstract}
+
+\section{Model, statements and scope}
+
+There are $n$ experts and $T$ rounds. Before seeing
+$c_t\in[0,1]^n$, a causal learner chooses an index
+$I_t=I_t(c_{<t},R)$, where its full random tape $R$ is independent of
+the inputs. For a deterministic input $c=(c_1,\ldots,c_T)$ define
+\[
+ \Reg_T(c,R)=\sum_{t=1}^T c_t(I_t)-\min_{i\in[n]}\sum_{t=1}^T c_t(i),
+ \qquad
+ \mathcal R_T=\sup_{c\in([0,1]^n)^T}\E_R\Reg_T(c,R).
+\]
+The expectation always includes the \emph{entire original tape};
+we impose no regret condition on individual seeds.
+
+For a fixed law $\mathcal D_1\otimes\cdots\otimes\mathcal D_T$ on the
+cost vectors, draw $c,c'$ independently and use the same $R$.
+The learner is \emph{product $\rho$-replicable} if
+\begin{equation}\label{eq:rep}
+ \Prob\bigl[(I_t(c_{<t},R))_{t=1}^T
+          \ne(I_t(c'_{<t},R))_{t=1}^T\bigr]\le\rho
+\end{equation}
+for every such fixed product law. It is \emph{iid $\rho$-replicable}
+if the condition is required only when all $\mathcal D_t$ are the
+same unknown distribution. Coordinates within each cost vector may be
+arbitrarily dependent. The distributions are fixed independently of
+the realized inputs and tape; no adaptive-input assertion is made.
+
+These are the two replication notions considered by
+Ahmadi, Bhandari and Blum~\cite{ABB}.
+Let $\calV_{\iid}(T,n,\rho)$ and $\calV_{\prodclass}(T,n,\rho)$ be the
+infima of $\mathcal R_T$ over the respective classes of learners.
+Thus the two values have the \emph{same} regret criterion;
+only the distribution class in~\eqref{eq:rep} changes.
+
+\begin{theorem}[Finite product-replication lower bound]\label{thm:lower}
+Let $m,L$ be positive integers, $T=mL$, $n=2^m$, and $0<\rho<1$.
+Every product $\rho$-replicable learner satisfies
+\begin{equation}\label{eq:lower}
+ \mathcal R_T\ge
+ \min\left\{\frac{(1-\rho)T}{32},
+ \frac{\sqrt3(1-\rho)^3\sqrt T\,m^{3/2}}{768\rho}\right\}.
+\end{equation}
+The bound permits arbitrary correlations throughout the shared tape,
+arbitrary internal state, and a global rare branch.
+\end{theorem}
+
+\begin{theorem}[An iid-replicable upper bound]\label{thm:upper}
+For integers $n,T\ge2$ and $0<\rho<1$, put
+\[
+ J=\left\lceil\log_2\max\{1,\log T\}\right\rceil,\qquad B=J+2,
+\]
+\[
+ U=2\sqrt T+\frac{16B^2\sqrt T\log n}{\rho}
+          +\frac{\rho\sqrt T}{8},\qquad
+ A=U+3\sqrt{T\log(2n)},\qquad \kappa=\frac{8A}{\rho}.
+\]
+There is a causal iid $\rho$-replicable learner with
+\begin{equation}\label{eq:upper}
+ \mathcal R_T\le
+ \min\left\{T,\ \kappa+1+\sqrt{\frac{T\log n}{2}}\right\}
+ =O\!\left(\min\left\{T,
+ \frac{\sqrt T\log(2n)[1+\log\log(2T)]^2}{\rho^2}\right\}\right).
+\end{equation}
+It uses $O(nT)$ ideal real-arithmetic operations and
+$O(n+\log\log T)$ working storage, with exponential sampling and
+elementary real functions as primitives. This is not a random-bit
+or floating-point complexity claim.
+\end{theorem}
+
+\begin{corollary}[Two separation regimes]\label{cor:separation}
+Fix $0<\rho<1$.
+\begin{enumerate}
+\item At $T=m^3,n=2^m$, as $m\to\infty$,
+\[
+ \calV_{\prodclass}(m^3,2^m,\rho)=\Theta_\rho(m^3),\qquad
+ \calV_{\iid}(m^3,2^m,\rho)
+ =O_\rho\bigl(m^{5/2}[1+\log\log m]^2\bigr)=o(m^3).
+\]
+\item At $T=m2^m,n=2^m$, for integers $m\ge2$,
+\[
+ \calV_{\prodclass}(T,n,\rho)=\Omega_\rho(\sqrt T\,m^{3/2}),\qquad
+ \calV_{\iid}(T,n,\rho)
+ =O_\rho\bigl(\sqrt T\,m[1+\log m]^2\bigr).
+\]
+Consequently $\calV_{\prodclass}/\calV_{\iid}$ tends to infinity,
+at least as a constant times $\sqrt m/[1+\log m]^2$, although $n<T$.
+\end{enumerate}
+\end{corollary}
+
+\begin{proof}
+Substitute $L=m^2$ and $L=2^m$, respectively, in~\eqref{eq:lower}
+and apply~\eqref{eq:upper}. In the first regime the two terms in
+the lower bound are constant multiples of $T$, and the trivial regret
+upper bound is $T$. In the second regime the square-root term is
+eventually the smaller term and $\log\log T=\Theta(\log m)$.
+The denominator in the ratio is positive: for any learner, choose a
+least-probable first-round expert to have cost zero, give all other
+experts cost one on that round, and give all later costs zero.
+The resulting expected regret is at least $1-1/n>0$.
+Both displayed comparison rates in the second regime are sublinear;
+that lower bound does not establish an impossibility of no-regret
+learning there.
+\end{proof}
+
+\paragraph{Relation to existing results.}
+The main point is the stronger product-replication lower bound and
+its qualitative consequence. The upper construction supplies a
+self-contained sufficient iid comparison; it is not claimed to improve
+the iid rate stated in~\cite{ABB}. The ingredients are classical Gibbs
+stability, correlated sampling, martingale maximal bounds and a
+regret-triggered fallback. Hopkins et al.~\cite{HIKLY} already study
+adaptive sequential composition, including a sample cutoff followed by
+a nonreplicable fallback. Here the different constraint is that actions
+must be committed at prescribed rounds of a fixed input stream and the
+entire clock-time action path must agree. Realizable PAC
+learning~\cite{LMPS} instead concerns a final classifier.
+The comparison is not a claim that these literatures are unrelated,
+nor a claim of first discovery. Section~\ref{sec:discussion} specifies
+the remaining boundaries.
+
+\section{A causal phase-cube lower bound}
+
+\subsection{One legal product family and one fixed comparator}
+
+Index experts by $b\in\{-1,+1\}^m$. Partition the horizon into $m$
+public phases of length $L$. Fix
+$\theta=(\theta_1,\ldots,\theta_m)\in[-\delta,\delta]^m$,
+where $0<\delta\le1/2$. Let the signs $X_{j,s}$ be independent,
+with mean $\theta_j$, and give expert $b$ the cost
+\begin{equation}\label{eq:cube}
+ c_{j,s}(b)=\frac{1-b_jX_{j,s}}2.
+\end{equation}
+For each fixed $\theta$, this is a valid temporal product law.
+Let $A_{j,s}\in\{-1,+1\}$ be the $j$th coordinate of the selected
+expert, and write $S_j=\sum_{s=1}^L X_{j,s}$.
+
+The realized best \emph{single} cube expert chooses
+$b_j=\operatorname{sign}(S_j)$ simultaneously for all $j$.
+Thus its expected-regret comparison is exactly
+\begin{equation}\label{eq:regexact}
+ \E\Reg_T=\frac12\sum_{j=1}^m
+   \left(\E|S_j|-\sum_{s=1}^L\E[A_{j,s}X_{j,s}]\right).
+\end{equation}
+Causality gives $\E[A_{j,s}X_{j,s}]=\theta_j\E A_{j,s}$,
+and $\E|S_j|\ge L|\theta_j|$. Introduce independent shared
+uniform indices $K_j\in\{1,\ldots,L\}$, independent of everything
+else. They are analysis-only coins, not inputs to the learner.
+Equation~\eqref{eq:regexact} implies
+\begin{equation}\label{eq:meanoracle}
+ \E\Reg_T\ge
+ L\sum_{j=1}^m|\theta_j|
+       \Prob[A_{j,K_j}\ne\operatorname{sign}(\theta_j)].
+\end{equation}
+The right side is nonnegative after averaging over the full tape
+and input law; we have not discarded a negative-regret seed.
+
+For analysis, draw the coordinates $\theta_j$ independently and
+uniformly from $[-\delta,\delta]$. We average guarantees valid at
+\emph{each fixed} $\theta$. The resulting mixture is not itself
+asserted to be a temporal product law. Include the $K_j$ in the
+augmented shared tape $\bar R$ with its original distribution.
+
+Define the phase probe $B_j=(A_{j,K_j}+1)/2$. Each probe is determined
+before any future phase arrives. Equal entire action paths imply
+equal probe paths. Before phase $j$, let $H$ be the complete earlier
+raw sign blocks. For fixed $H=h,\bar R=r$, define
+\[
+ q_{h,r}(\vartheta)
+ =\Prob[B_j=1\mid H=h,\bar R=r,\theta_j=\vartheta].
+\]
+The new coordinate $\theta_j$ is independent of the past and tape.
+All internal state determined by $h,r$ is permitted.
+
+Let $I_-=[-\delta,-\delta/2]$ and $I_+=[\delta/2,\delta]$, and put
+\[
+ \Delta_{h,r}=\E_{\vartheta\sim\mathrm{Unif}(I_+)}q_{h,r}(\vartheta)
+             -\E_{\vartheta\sim\mathrm{Unif}(I_-)}q_{h,r}(\vartheta),
+ \qquad v_j=\E_{H,\bar R}\Delta_{H,\bar R}.
+\]
+These are unconditional past-history averages, not averages
+conditioned on earlier agreement. If
+\[
+ e_j=\E\bigl[|\theta_j|
+    \1\{A_{j,K_j}\ne\operatorname{sign}(\theta_j)\}\bigr],
+\]
+then~\eqref{eq:meanoracle} gives
+$L\sum_j e_j\le\mathcal R_T$. Each outer bin has prior probability $1/4$
+and $|\theta_j|\ge\delta/2$ there. Hence
+$e_j\ge(\delta/8)(1-v_j)$ and
+\begin{equation}\label{eq:response}
+ \frac1m\sum_{j=1}^m v_j\ge1-\frac{8\mathcal R_T}{\delta T}.
+\end{equation}
+
+\subsection{A one-phase transition inequality}
+
+\begin{lemma}\label{lem:transition}
+For every fixed past $h$ and augmented tape $r$,
+\begin{equation}\label{eq:coarea}
+ \E_{\vartheta\sim\mathrm{Unif}[-\delta,\delta]}
+  q_{h,r}(\vartheta)(1-q_{h,r}(\vartheta))
+ \ge\frac{\sqrt3}{12\delta\sqrt L}\,\Delta_{h,r}^2.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Suppress $h,r$. The probe is a deterministic Boolean function of
+the $L$ fresh signs when the past and full tape are fixed.
+Its expectation $q(\vartheta)$ is a polynomial. The score identity
+and Cauchy--Schwarz give
+\[
+ |q'(\vartheta)|
+ \le\sqrt{\frac{Lq(\vartheta)(1-q(\vartheta))}{1-\vartheta^2}}
+ \le\sqrt{L/3}=:M_0 ,
+\]
+since $|\vartheta|\le1/2$. This allows all $L$ signs, even if
+the causal probe only uses a prefix.
+
+Set $\Psi(u)=u^2/2-u^3/3$. For $a\in I_-$ and $b\in I_+$,
+\[
+ \begin{split}
+ M_0\int_{-\delta}^{\delta}q(1-q)\,d\vartheta
+ &\ge\int_a^b q(1-q)|q'|\,d\vartheta\\
+ &\ge|\Psi(q(b))-\Psi(q(a))|
+ \ge\frac{|q(b)-q(a)|^2}{6}.
+ \end{split}
+\]
+The last inequality follows because, on any subinterval of $[0,1]$
+of length $z$, the integral of $u(1-u)$ is at least
+$z^2/2-z^3/3\ge z^2/6$. No monotonicity of $q$ is assumed.
+Average over independent uniform $a,b$ in the two outer bins,
+apply Jensen, and divide by $2\delta M_0$.
+\end{proof}
+
+\subsection{First mismatches with the entire original tape}
+
+Let $D_{j-1}$ be the event that the previous probe paths disagree
+between the paired runs, and let $d_{j-1}=\Prob(D_{j-1})$ under
+the parameter prior, paired samples conditional on the parameter
+and the full shared $\bar R$. We have $d_{j-1}\le\rho$, because
+each fixed-parameter whole-probe failure is bounded by~\eqref{eq:rep}.
+
+Conditional on earlier histories $H=h,H'=h'$ and tape $\bar R=r$,
+the current raw sign blocks are independent given the fresh
+$\theta_j$. Their probe probabilities are
+$q=q_{h,r}(\theta_j)$ and $q'=q_{h',r}(\theta_j)$, so
+\[
+ \Prob[B_j\ne B'_j\mid h,h',r,\theta_j]
+  =q+q'-2qq'\ge q(1-q).
+\]
+The event $D_{j-1}$ is determined by the earlier histories and tape,
+and is independent of the new parameter and current blocks.
+With $a_0=\sqrt3/12$, Lemma~\ref{lem:transition} therefore gives
+\[
+ d_j-d_{j-1}\ge
+ \frac{a_0}{\delta\sqrt L}
+ \E\left[\1_{D_{j-1}^c}\Delta_{H,\bar R}^2\right].
+\]
+The earlier histories may be correlated after their old parameters
+are integrated out. No independence of $H$ and $H'$ is used.
+
+Since $\Delta\le1$, deleting $D_{j-1}$ from its unconditional
+expectation costs at most $d_{j-1}$. Cauchy--Schwarz implies
+\[
+ \E[\1_{D_{j-1}^c}\Delta^2]
+ \ge\frac{\pos{v_j-d_{j-1}}^2}{1-d_{j-1}}
+ \ge\pos{v_j-\rho}^2.
+\]
+Sum the disjoint first-mismatch increments, then use convexity and
+\eqref{eq:response}, to obtain
+\begin{equation}\label{eq:master}
+ \rho\ge\frac{a_0m}{\delta\sqrt L}
+       \pos{1-\rho-\frac{8\mathcal R_T}{\delta T}}^2.
+\end{equation}
+This is not a union-bound lower estimate on repeated mismatches,
+nor an assumption of error $\rho/m$ in each phase. Accuracy was
+not conditioned on previous agreement.
+
+\begin{proof}[Proof of Theorem~\ref{thm:lower}]
+Choose
+\[
+ \delta=\min\left\{\frac12,\,
+      \frac{a_0m(1-\rho)^2}{4\rho\sqrt L}\right\}.
+\]
+Then $\sqrt{\rho\delta\sqrt L/(a_0m)}\le(1-\rho)/2$.
+Rearranging~\eqref{eq:master}, including the case where its positive
+part is zero, gives $\mathcal R_T\ge\delta T(1-\rho)/16$.
+Substitution yields~\eqref{eq:lower}. Every parameter vector in this
+argument defines a legal fixed product law; averaging over the prior
+does not change the learner's required input model.
+\end{proof}
+
+\paragraph{Embedding.}
+For more than $2^m$ experts, duplicate cube experts and map the chosen
+index to its cube vector. Equal index paths still imply equal probe
+paths. For $1\le m\le T$ and a horizon not divisible by $m$, use
+$m\lfloor T/m\rfloor$ active rounds and append zero costs.
+The lower formula then uses the active horizon. Neither embedding
+adds restrictions to the original tape.
+
+\section{A self-contained iid upper bound}
+
+\subsection{Gibbs stability and a shared sampler}
+
+For a cumulative cost vector $C$, write
+$p_i(C)=e^{-\eta C_i}/Z(C)$.
+
+\begin{lemma}\label{lem:gibbs}
+Let $\eta>0$, let $P$ be a positive integer, and let $C,C'$ be
+independent same-law sums of $P$ independent random vectors in $[0,1]^n$, not necessarily identically distributed.
+Then
+\[
+ \E\KL(p(C)\Vert p(C'))\le\frac{\eta^2P}{2},
+ \qquad
+ \E\TV(p(C),p(C'))\le\frac{\eta\sqrt P}{2}.
+\]
+Using the same independent unit exponentials $E_i$ to sample
+$\arg\min_i E_i/p_i(C)$ and $\arg\min_i E_i/p_i(C')$
+gives mismatch probability at most $\eta\sqrt P$.
+For iid summands of mean $\mu$,
+\begin{equation}\label{eq:gibbsrisk}
+ \E\langle p(C),\mu\rangle-\min_i\mu_i
+ \le\frac{\log n}{\eta P}+\frac{\eta}{2}.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Changing one summand changes each coordinate of $C$ by at most one.
+Interpolate along $C(u)=C+ud$ for $0\le u\le1$ and
+$d\in[-1,1]^n$, writing $p_i(u)=p_i(C(u))$. Differentiation gives
+$p_i'(u)=-\eta p_i(u)(d_i-\E_{p(u)}d)$.
+A random variable in an interval of length two has mean absolute
+deviation at most one, so the resulting total variation is at most
+$\eta/2$.
+
+Replace summand $X_s$ by an independent copy, writing $C^{(s)}$.
+The new sum has the original distribution and is independent of $X_s$.
+Since coordinates of $X_s$ are in $[0,1]$,
+\[
+ \E\langle p(C),\E X_s-X_s\rangle
+ =\E\langle p(C^{(s)})-p(C),X_s\rangle
+ \le\eta/2 .
+\]
+The exact identity
+\[
+ \KL(p(C)\Vert p(C'))=
+ \eta\langle p(C),C'-C\rangle+\log Z(C')-\log Z(C)
+\]
+has cancelling expected log-partition terms. Summing the preceding
+inequality proves the KL bound. Pinsker and Jensen prove the
+total-variation bound.
+
+For deterministic positive distributions $p,q$, let $v=\TV(p,q)$.
+The probability that $i$ wins both shared exponential races is
+\[
+ \left[\sum_j\max(p_j/p_i,q_j/q_i)\right]^{-1}
+ \ge\frac{\min(p_i,q_i)}{1+v}.
+\]
+Summing proves mismatch at most $2v/(1+v)\le2v$.
+
+Finally Gibbs' variational inequality gives
+$\langle p(C),C\rangle\le C_i+\log n/\eta$ for every $i$.
+Combine this with the replace-one estimate, sum over $s$, and compare
+with an index minimizing $\mu_i$ to obtain~\eqref{eq:gibbsrisk}.
+\end{proof}
+
+\subsection{A pure learner on a deterministic calendar}
+
+Let $J,B$ be as in Theorem~\ref{thm:upper}. Set
+\[
+ P_j=\left\lceil T^{\,1-2^{-(j+1)}}\right\rceil
+       \quad(0\le j\le J),
+\]
+delete repeated values, and append $T$ if it is not already present.
+Play expert 1 through $P_0$. After each retained prefix $P<T$,
+use a fresh shared exponential race to draw from the Gibbs distribution
+of the entire prefix with
+\[
+ \eta_P=\frac{\rho}{8B\sqrt P}.
+\]
+Keep that expert for the next calendar block. There are at most $B$
+races. All race arrays belong to the original tape and are independent
+of inputs.
+
+Every subsequent block length $\ell$ satisfies
+\begin{equation}\label{eq:calendar}
+ \ell/\sqrt P\le2\sqrt T,\qquad P_0\le2\sqrt T.
+\end{equation}
+Indeed, successive unrounded prefixes satisfy
+$x_{j+1}=\sqrt{Tx_j}$, so a nonfinal successor obeys
+$P_{\rm next}\le\sqrt{TP}+1$. If repetitions were deleted, use the
+last index having the repeated value. For the appended final block,
+$2^{J+1}\ge2\log T$ gives $P_J\ge Te^{-1/2}$, and
+$T/\sqrt{P_J}\le e^{1/4}\sqrt T<2\sqrt T$.
+
+Lemma~\ref{lem:gibbs} and a union bound over this deterministic
+calendar give pure entire-path mismatch probability at most $\rho/8$.
+Under iid costs of mean $\mu$, with $\mu_*=\min_i\mu_i$, the
+nonnegative random pseudo-regret
+$W=\sum_t(\mu_{I_t}-\mu_*)$ obeys, by~\eqref{eq:gibbsrisk}
+and~\eqref{eq:calendar},
+\begin{equation}\label{eq:pseudoreg}
+ \E W\le
+ 2\sqrt T+\frac{16B^2\sqrt T\log n}{\rho}
+          +\frac{\rho\sqrt T}{8}=U .
+\end{equation}
+The race winner is independent of all subsequent block costs.
+Using it throughout the block does not change this expectation.
+
+\subsection{Controlling the maximum prefix regret}
+
+For the pure learner define $R_0=0$ and
+\[
+ R_t=\sum_{s\le t}c_s(I_s)-\min_i\sum_{s\le t}c_s(i).
+\]
+Let
+\[
+ M_t=\sum_{s\le t}(c_s(I_s)-\mu_{I_s}),\qquad
+ N_{i,t}=\sum_{s\le t}(c_s(i)-\mu_i).
+\]
+In the filtration containing the entire independent tape and observed
+costs, these are martingales with increments of conditional mean zero
+and range length at most one. Hoeffding's exponential supermartingale
+and its maximal inequality yield
+\[
+ \Prob\!\left[\max_{t\le T}M_t\ge x\right]\le e^{-2x^2/T},\qquad
+ \Prob\!\left[\max_{i,t\le T}(-N_{i,t})\ge x\right]
+ \le\min\{1,ne^{-2x^2/T}\}.
+\]
+For completeness, the nonnegative supermartingale
+$\exp(\lambda M_t-\lambda^2t/8)$ gives the first bound after
+optimizing $\lambda$; apply the same argument to $-N_{i,t}$
+and union over $i$ for the second.
+
+Deterministically,
+\[
+ R_t\le\sum_{s\le t}(\mu_{I_s}-\mu_*)+M_t+\max_i(-N_{i,t}).
+\]
+The pseudo-regret increments are nonnegative, so their prefix is at
+most $W$. Integrating the first tail gives a bound $\sqrt T$.
+For the second, split at $a=\sqrt{T\log(2n)/2}$ and use
+\[
+ \int_a^\infty e^{-2x^2/T}\,dx
+ \le\frac{T}{4a}e^{-2a^2/T}.
+\]
+Its expected maximum is at most
+$a+T/(8a)\le2\sqrt{T\log(2n)}$. With~\eqref{eq:pseudoreg},
+\begin{equation}\label{eq:maxprefix}
+ \E\max_{0\le t\le T}R_t\le U+3\sqrt{T\log(2n)}=A.
+\end{equation}
+The random variable on the left is nonnegative because it includes
+$t=0$. This controls the whole prefix path, not merely terminal
+regret or pseudo-regret.
+
+\subsection{A fallback preserving all-input regret}
+
+The actual learner follows the pure learner until the end of the first
+round $\tau$ with $R_\tau\ge\kappa=8A/\rho$. If $\tau<T$,
+it starts fresh ordinary Hedge on the remaining rounds, with uniform
+weights and learning rate
+$\eta_H=\sqrt{8\log n/(T-\tau)}$. Its sampling tape is an independent
+part of the original shared tape. No fallback is needed if $\tau=T$
+or no crossing occurs.
+
+The pure process is defined counterfactually for all $T$ rounds.
+Before the first crossing it equals the actual process. Under any iid
+law, Markov and~\eqref{eq:maxprefix} give
+$\Prob(\tau\le T)\le\rho/8$. If paired pure paths agree and neither
+run crosses, the actual paths agree. Thus actual path mismatch is at
+most $\rho/8+2(\rho/8)=3\rho/8<\rho$.
+This union bound makes no assumption about independence of the crossing
+events.
+
+On every fixed deterministic input,
+$R_t-R_{t-1}\in[-1,1]$, since the selected cost and the increment of
+the minimum cumulative expert cost each lie in $[0,1]$.
+The prefix regret at the first crossing is therefore less than
+$\kappa+1$. If there is no crossing, terminal regret is below $\kappa$.
+Conditional on $\tau$ and the pure history, the suffix is a fixed
+cost sequence and the fallback tape retains its independent law.
+
+For a fixed suffix of length $h$, the elementary Hedge potential
+calculation gives expected regret at most
+$\log n/\eta+\eta h/8$: normalize exponential weights each round,
+apply the bounded-variable log-moment inequality
+$\log\E e^{-\eta X}\le-\eta\E X+\eta^2/8$, and compare the final
+potential with the contribution of a best suffix expert.
+With the stated $\eta_H$, this is
+$\sqrt{h\log n/2}\le\sqrt{T\log n/2}$.
+The sum of the best prefix and best suffix costs is at most the
+best \emph{single full-horizon} expert's cost. Adding the two regret
+bounds, then averaging over the complete original tape, proves
+\eqref{eq:upper}. The minimum with $T$ uses the pathwise bound
+$\Reg_T\le T$, not nonnegativity of realized regret.
+
+The implementation stores cumulative costs and the current expert,
+computes each race in $O(n)$ operations, monitors regret in $O(n)$
+per round, and uses ordinary $O(n)$ Hedge updates after switching.
+The counterfactual pure continuation is for analysis only and need
+not be computed after switching. This proves the complexity
+claim in Theorem~\ref{thm:upper}.
+
+\section{What the separation does and does not imply}\label{sec:discussion}
+
+The lower-bound family imposes sequential causal commitments to
+independent phase biases. It does not restrict the tape to independent
+per-phase coins or impose a per-phase replication budget.
+The proof pools all randomness and charges disjoint first mismatches.
+The cube of experts is essential to comparing every phase with
+\emph{one} fixed full-horizon comparator.
+
+Replicable coin estimation~\cite{HIKLY} permits adaptive choices of
+which coordinate to sample. Its Section 6.4 and Lemma 6.14 also permit
+sequential subroutines, aggregation of their transcript, and a rare
+sample-cutoff fallback to a nonreplicable procedure. Thus sequential
+composition, shared randomness and such a fallback are not new here.
+Those results allow sample allocation and stopping rules that are not
+freely available in the prescribed chronological phase stream. Their
+coordinate-sampling lower bound (Theorem 4.46 and Appendix A.4) also
+does not by itself impose the cumulative causal commitments used in
+Theorem~\ref{thm:lower}.
+The realizable PAC lower bound in~\cite{LMPS} concerns a final
+classifier and an iid sample-complexity criterion. Matching exponents
+of $\log n$ in those statements alone do not imply
+Theorem~\ref{thm:lower}; a reduction preserving causality, the full
+tape and cumulative regret would be needed. This is a scoped
+comparison of these theorems, not an exhaustive priority claim.
+
+At fixed $n$ our lower bound remains of square-root horizon order.
+It does not resolve the general optimal product-replicable rate.
+The linear-versus-sublinear regime uses
+$n=\exp(\Theta(T^{1/3}))$; the second regime has $n<T$ but gives
+a multiplicative cost gap rather than linear regret.
+Exact entire-path replication is stronger than agreement on a
+final recommendation or low average action disagreement.
+No trained-model degradation, numerical advantage, empirical benchmark,
+external endorsement, or hiring consequence is established by the proofs.
+
+\begin{thebibliography}{9}
+\bibitem{ABB}
+S. Ahmadi, S. Bhandari and A. Blum.
+\emph{Replicable Online Learning}.
+Advances in Neural Information Processing Systems, 2025.
+\url{https://proceedings.neurips.cc/paper_files/paper/2025/file/da8abfd153886b745278b40b5df0be93-Paper-Conference.pdf}.
+
+\bibitem{HIKLY}
+M. Hopkins, R. Impagliazzo, D. Kane, S. Liu and C. Ye.
+\emph{Replicability in High Dimensional Statistics}.
+arXiv:2406.02628v1, 2024.
+\url{https://arxiv.org/abs/2406.02628v1}.
+
+\bibitem{LMPS}
+K. G. Larsen, M. E. Mathiasen, C. Pabbaraju and C. Svendsen.
+\emph{The Sample Complexity of Replicable Realizable PAC Learning}.
+arXiv:2602.19552v1, 2026.
+\url{https://arxiv.org/abs/2602.19552v1}.
+\end{thebibliography}
+\end{document}

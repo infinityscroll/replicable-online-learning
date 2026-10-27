@@ -1,0 +1,209 @@
+\section{Whole-path replication of the supported relay}
+\label{sec:replication}
+
+The widening statistic $V_t$ and the support windows depend only on the
+observed costs, not on the relay's actions. This permits a comparison with
+deterministic quantities associated with the input law. In particular, no
+part of the following argument conditions on agreement of earlier actions.
+
+\begin{lemma}[Replication of the supported relay]
+\label{lem:relay-replication}
+Let $T\ge2$, $0<\alpha,\epsilon\le1$, and $0<r<1$. Set
+\begin{equation}
+ \eta=\sqrt{2T\ln(16T/r)},\qquad
+ J=1+\lfloor\log_2(T-1)\rfloor.
+ \label{eq:replication-parameters}
+\end{equation}
+If
+\begin{equation}
+ H\ge \frac{128J\eta}{\alpha\epsilon^2r},
+ \label{eq:replication-width}
+\end{equation}
+then the supported relay with $h_t=H+\alpha V_t$, shared independent
+$\theta\sim\operatorname{Unif}[-1,1]$ and
+$U\sim\operatorname{Unif}[1,2]$, and $d=U\epsilon$, is $r$-replicable.
+More precisely, for every fixed product law on $[-1,1]^T$, two independent
+input streams using the same complete random tape produce identical
+played-action paths $(A_1,\ldots,A_T)$ with probability at least $1-r$.
+The law may vary arbitrarily across time and is independent of the tape.
+The conclusion allows any common tape-measurable initialization of $A_1$,
+including the initialization used above.
+\end{lemma}
+
+\begin{proof}
+Fix such an input law. Write
+\[
+ \bar S_t=\EE S_t,\qquad D_t=\EE V_t,\qquad
+ \bar h_t=H+\alpha D_t.
+\]
+These are deterministic functions of the fixed law. A relevant monitoring
+window is $I=(t-L,t]$ with $1\le t<T$, $L$ a power of two, and $L\mid t$.
+Let $\mu_I=\bar S_t-\bar S_{t-L}$. The two streams will be denoted by
+superscripts $1,2$ when necessary.
+
+First, for an arbitrary $\eta>0$, there is an event $\mathcal E$ depending
+only on the two input streams such that
+\begin{equation}
+ \PP(\mathcal E^c)\le 8T\exp\!\left(-\frac{\eta^2}{2T}\right),
+ \label{eq:replication-concentration}
+\end{equation}
+and, on $\mathcal E$, for every prefix and both streams,
+\begin{equation}
+ \abs{S_t-\bar S_t}\le\eta,\qquad
+ \abs{V_t-D_t}\le\eta,\qquad
+ \abs{h_t-\bar h_t}\le\alpha\eta.
+ \label{eq:replication-good-event}
+\end{equation}
+Indeed, Hoeffding's inequality gives the stated tail bound for $S_t$.
+For a fixed interval collection defining $V_t$, a coordinate occurs in at
+most one summand, and changing that coordinate changes the summand by at
+most the magnitude of the change. Taking a maximum preserves this
+coordinatewise $1$-Lipschitz bound. Since each input coordinate lies in
+$[-1,1]$, the bounded-differences inequality gives the same tail bound for
+$V_t$. A union bound over the two statistics, both streams, and at most
+$T$ prefixes proves \eqref{eq:replication-concentration}. Independence
+across time is used here; identical distribution is not required.
+
+Appending $I$ to an optimal interval collection in $[1,t-L]$ gives
+\[
+ V_t\ge V_{t-L}
+       +\pos{\abs{S_t-S_{t-L}}-\gamma\sqrt L}.
+\]
+Taking expectations and using Jensen's inequality yields
+\begin{equation}
+ D_t-D_{t-L}\ge \abs{\mu_I}-\gamma\sqrt L.
+ \label{eq:replication-mean-progress}
+\end{equation}
+Also $D_t$ and $\bar h_t$ are nondecreasing in $t$.
+
+For the moment assume
+\begin{equation}
+ \epsilon H\ge4(1+\alpha\epsilon)\eta,
+ \qquad
+ \epsilon H\ge4\gamma\sqrt T.
+ \label{eq:replication-auxiliary-width}
+\end{equation}
+Call a relevant window a \emph{candidate} if
+\begin{equation}
+ \abs{\mu_I}\ge\frac{\epsilon\bar h_t}{2}.
+ \label{eq:replication-candidate}
+\end{equation}
+This family is deterministic once the law is fixed. On $\mathcal E$, if
+either stream passes either signed support test at $I$ for some
+$U\in[1,2]$, then $I$ is a candidate, and the passing sign is
+$\operatorname{sign}(\mu_I)$. To see this, let $\sigma\in\{-1,1\}$
+be a passing sign. An interval increment differs from its mean by at most
+$2\eta$, so
+\[
+ \sigma\mu_I
+ \ge\epsilon\bar h_t-2(1+\alpha\epsilon)\eta
+ \ge\frac{\epsilon\bar h_t}{2}>0.
+\]
+Here the actual passing inequality is
+$\sigma(S_t-S_{t-L})\ge U\epsilon h_t$, and we have used a conservative
+bound uniform over $U\in[1,2]$. Thus noncandidate windows cannot cause
+a switch on $\mathcal E$, and at a candidate the opposite sign cannot
+pass.
+
+For a candidate, \eqref{eq:replication-mean-progress} and
+\eqref{eq:replication-auxiliary-width} imply
+\begin{equation}
+ \bar h_t-\bar h_{t-L}
+ \ge\frac{\alpha\epsilon}{4}\bar h_t.
+ \label{eq:replication-width-growth}
+\end{equation}
+Set $\kappa=\alpha\epsilon/4\in(0,1/4]$. At a fixed scale $L$, the
+public $L$-windows are disjoint. If their candidate endpoint widths in
+time order are $b_1,\ldots,b_m$, monotonicity and
+\eqref{eq:replication-width-growth} imply
+$b_j\ge b_{j-1}/(1-\kappa)$, with $b_0=H$. Consequently
+\begin{equation}
+ \sum_{\substack{I\text{ candidate}\\\text{at scale }L}}
+       \frac1{\bar h_{\operatorname{end}(I)}}
+ \le\frac1H\sum_{j\ge1}(1-\kappa)^j
+ \le\frac{4}{\alpha\epsilon H}.
+ \label{eq:replication-inverse-widths}
+\end{equation}
+There are $J$ relevant dyadic scales. The endpoint widths and the
+candidate family in this inequality depend on neither tape nor realized
+input stream.
+
+We next bound the exceptional shared thresholds. Fix any pair of input
+streams in $\mathcal E$. Because $\mathcal E$ is input-only, $\theta$
+and $U$ retain their independent uniform laws. For a candidate $I$, put
+$\sigma=\operatorname{sign}(\mu_I)$ and
+$\delta_e=2(1+\alpha\epsilon)\eta$. In either stream, the signed support
+expression differs from its deterministic reference
+$\sigma\mu_I-U\epsilon\bar h_t$ by at most $\delta_e$. Therefore a
+difference between the two support decisions requires
+\[
+ \abs{\sigma\mu_I-U\epsilon\bar h_t}\le\delta_e.
+\]
+The possible $U$ values lie in an interval of length at most
+$2\delta_e/(\epsilon\bar h_t)$. Since the support of $U$ has length one,
+the probability of this event is at most
+\begin{equation}
+ \frac{4(1+\alpha\epsilon)\eta}{\epsilon\bar h_t}.
+ \label{eq:replication-support-strip}
+\end{equation}
+No additional sign factor is needed: the preceding argument excluded
+passage with the opposite sign on $\mathcal E$.
+
+The state tests in the two directions compare
+$S_t-h_t(\theta+U\epsilon)$ and $S_t-h_t(\theta-U\epsilon)$ to zero.
+Each differs from its corresponding reference with $S_t,h_t$ replaced
+by $\bar S_t,\bar h_t$ by at most
+\[
+ \delta_s=[1+\alpha(1+2\epsilon)]\eta.
+\]
+For each fixed $U$, disagreement on either test is confined to a
+$\theta$-interval of length at most $2\delta_s/\bar h_t$. Uniformity on
+$[-1,1]$ and independence from $U$ show that the union for the two
+directions has probability at most
+\begin{equation}
+ \frac{2[1+\alpha(1+2\epsilon)]\eta}{\bar h_t}.
+ \label{eq:replication-state-strips}
+\end{equation}
+
+Include \eqref{eq:replication-state-strips} once per candidate window;
+counting a time more than once only weakens the bound. If no candidate
+ends at a time, neither stream can switch then. Otherwise, outside the
+support strips all signed support predicates agree, and outside the
+state strips both state predicates agree. Starting from the common
+$A_1$, induction therefore gives identical played-action paths whenever
+none of these strip events occurs. This is a pointwise implication. No
+probability estimate has been conditioned on earlier agreement, on the
+current action, or on a surviving tape branch.
+
+Applying the union bound and \eqref{eq:replication-inverse-widths} gives,
+under \eqref{eq:replication-auxiliary-width},
+\begin{align}
+ \PP\{(A_t^1)_{t=1}^T\ne(A_t^2)_{t=1}^T\}
+ &\le 8T e^{-\eta^2/(2T)}
+  +\left[\frac{4(1+\alpha\epsilon)}{\epsilon}
+      +2\bigl(1+\alpha(1+2\epsilon)\bigr)\right]
+      \frac{4J\eta}{\alpha\epsilon H}\notag\\
+ &\le 8T e^{-\eta^2/(2T)}
+      +\frac{64J\eta}{\alpha\epsilon^2H}.
+ \label{eq:replication-general-bound}
+\end{align}
+The final inequality uses only $\alpha,\epsilon\le1$.
+
+With \eqref{eq:replication-parameters}, the first term is $r/2$, and
+\eqref{eq:replication-width} bounds the second by $r/2$. The auxiliary
+conditions also hold: $\gamma\sqrt T\le2\eta$, whereas
+\eqref{eq:replication-width} dominates both $8\eta/\epsilon$ and
+$4(1+\alpha\epsilon)\eta/\epsilon$. This proves the claimed
+unconditional whole-path guarantee.
+\end{proof}
+
+\begin{remark}
+The use of $V_t$ rather than a surplus that vanishes on monotone paths is
+essential to this argument: every possibly active window forces the
+growth in \eqref{eq:replication-width-growth}. The independent $U$
+smooths the support comparison itself, while $\theta$ smooths the state
+comparison. All windows remain public and available after switches.
+The proof makes no assertion that close input paths have identical
+crossing times without these shared-threshold estimates. For $T=1$, a
+common input-independent initialization already replicates exactly.
+\end{remark}
